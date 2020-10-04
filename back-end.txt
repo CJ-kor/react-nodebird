@@ -1,0 +1,568 @@
+back 폴더 생성
+
+app.js 파일 생성
+ : http.createServer, port지정
+
+> npm init
+
+> node app.js로 실행, localhost: port로 접속
+
+express framework 없이 순수한 node로 실행하는 기본코드
+-----------------------------------------------------------------
+const http = require('http');
+// app.js가 실행되는 순간, node runtime이 js코드를 실행해서 http module이 server 역할을 해주는것임. 
+// node 자체가 server인 것이 아님
+
+// 기본원리 Server를 create해서 front-server의 request method와 url에 따라서 response를 해준다 (req 1번에 res 1번, 1:1매치)
+// 만약 response가 없으면 특정시간(약 30초) 후에 브라우저가 자동으로 응답실패로 처리함
+
+const server = http.createServer((req, res) => {
+   console.log(req.url, req.method);
+   if (req.method === 'GET') {
+      if (req.url === 'api/posts') {
+
+      }
+   } else if (req.method === 'POST') {
+      if (req.url === '/api/posts') {
+
+      }
+   } else if (req.method === 'DELETE') {
+      if (req.url === '/api/posts') {
+
+      }
+   }   // 엄청나게 길어져서 쪼개야 하는데 쉽게하려고 express 프레임워크를 사용함
+   res.write('<h1>Hello node1</h1>');
+   res.write('<h2>Hello node2</h2>');
+   res.end('<h3>Hello node3</h3>');  
+   // write, write ... 마지막은 end
+});
+
+server.listen(3065, () => console.log('Listening on port 3065'));
+------------------------------------------------------------------
+req.method와 req.url별로 설정해야함 -> 엄청나게 길어져서 쪼개야 함 
+---> 쉽게하려고 express 프레임워크를 사용함 :  express()가 http.server가 됨
+
+> npm i express
+
+app.js에 express require,
+
+routes폴더로 중복되는 것 뺌
+
+sequelizer 설치 (sequelizer: js로 MySQL DB 연결, SQL문으로 직접해도 됨)
+시퀄라이즈는 Model과 MySQL의 TABLE을 연결해주는 역할
+모델 이름은 단수형으로, 테이블 이름은 복수형으로 사용
+
+> npm i sequelizer sequelizer-cli mysql2
+mysql2는 연결 드라이버임(sequelizer가 config.json 정보를 mysql2드라이버에 보내줘서 node와 mySQL 연결해줌
+
+config.json 수정
+
+models폴더에 index.js와 db 테이블 별 js파일 생성
+
+app.js 수정(db연결)
+
+> node app 실행 -> unknown database라고 나옴
+
+> npx sequelize db:create		// MySQL db생성 명령
+
+다시 node app.js 실행 
+수정사항 있을때마다 ^C하고 다시 node app  재실행해야 하는데 자동으로 재실행해주는 모듈 사용
+> npm i -D nodemon
+
+설치 후 node 대신 nodemon app 으로 실행하면 자동 반영 
+  -> packgae.json "dev"에 "nodemon app" 넣어 주고 npm run dev로 해도 됨
+
+saga와 express 설정(saga파일들과 express app.js 파일 수정)
+
+비밀번호 암호화 라이브러리 
+> npm i bcrypt  -> routes/user.js파일에 require
+
+CORS문제 해결 라이브러리 
+> npm i cors -> app.js에서 app.use(cors())
+
+Login관리 라이브러리
+> npm i passport passport-local
+  passport 폴더 만들어서 index.js
+
+Login session 설정 : 
+> npm i express-session,  npm i cookie-parser
+
+보안(db pw, cookie secret문자열 등 해킹 방지) 모듈: npm i dotenv
+back폴더 아래에 .env파일 생성
+
+
+이미지파일 올리기 : 
+이미지,동영상등은 multipart로 front에서 back으로 보내지나 back express에서 multipart처리하려면
+multer라는 미들웨어 필요함
+>  npm i multer
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+==================================================================
+
+
+Mysql
+------------------------------------------------------------------
+$ mysql -h localhost -u root -p
+Enter password: [비밀번호 입력]
+mysql>
+------------------------------------------------------------------
+
+Mysql db 생성
+CREATE SCHEMA [데이터베이스명]이 데이터베이스를 생성하는 명령어입니다. 
+SCHEMA(스키마)라고 되어 있는데, MySQL에서 데이터베이스와 스키마는 같은 개념입니다.
+nodejs라는 이름의 데이터베이스를 생성합니다. 
+그 후 use nodejs; 명령어를 추가로 입력하여 앞으로 nodejs 데이터베이스를 사용하겠다는 것을 MySQL에 알립니다.
+-----------------------------------------------------------------
+mysql> CREATE SCHEMA `nodejs` DEFAULT CHARACTER SET utf8;
+Query OK, 1 row affected (0.01sec)
+mysql> use nodejs;
+Database changed
+-------------------------------------------------------------------
+
+nodejs db에 users 테이블 생성
+-------------------------------------------------------------------
+mysql> CREATE TABLE nodejs.users (
+  -> id INT NOT NULL AUTO_INCREMENT,
+  -> name VARCHAR(20) NOT NULL,
+  -> age INT UNSIGNED NOT NULL,
+  -> married TINYINT NOT NULL,
+  -> comment TEXT NULL,
+  -> created_at DATETIME NOT NULL DEFAULT now(),
+  -> PRIMARY KEY(id),
+  -> UNIQUE INDEX name_UNIQUE (name ASC))
+  -> COMMENT = '사용자 정보'
+  -> DEFAULT CHARACTER SET = utf8
+  -> ENGINE = InnoDB;
+
+
+세미콜론 입력 전에는 실행되지 않음
+Query OK, 0 row affected (0.09 sec)
+-------------------------------------------------------------------
+
+컬럼의 자료형(컬럼설정)
+• INT: 정수.  소수까지 저장하고 싶다면 FLOAT이나 DOUBLE 자료형을 사용
+
+• VARCHAR(자릿수) 외에도 CHAR(자릿수)라는 자료형도 있습니다. 
+   CHAR는 고정 길이고, VARCHAR는 가변 길이입니다. 
+   예를 들어 CHAR(10)이면 반드시 길이가 10인 문자열만 넣어야 하고, 
+   VARCHAR(10)일 경우에는 길이가 0~10인 문자열을 넣을 수 있습니다. 
+   CHAR에 주어진 길이보다 짧은 문자열을 넣는다면 부족한 자릿수만큼 스페이스가 채워집니다.
+
+• TEXT는 긴 글을 저장할 때 사용하며, VARCHAR와 헷갈릴 수 있습니다. 
+   수백 자 이내의 문자열은 보통 VARCHAR로 많이 처리하고, 그보다 길면 TEXT로 처리하곤 합니다.
+
+• TINYINT는 -128부터 127까지의 정수를 저장할 때 사용합니다. 
+   1 또는 0만 저장한다면 불 값(Boolean)과 같은 역할을 할 수 있습니다.
+
+• DATETIME은 날짜와 시간에 대한 정보를 담고 있습니다. 
+   날짜 정보만 담는 DATE와 시간 정보만 담는 TIME 자료형도 있습니다. 
+
+자료형의 옵션
+• NULL과 NOT NULL은 빈칸을 허용할지 여부를 묻는 옵션입니다. 
+   comment 컬럼만 NULL이고, 나머지는 모두 NOT NULL입니다. 
+   자기소개를 제외한 나머지 컬럼은 반드시 로우를 생성할 때 데이터를 입력해야 합니다.
+
+• id 컬럼에는 추가로 AUTO_INCREMENT가 붙어 있습니다. 
+   숫자를 저절로 올리겠다는 뜻입니다. 
+   예를 들어 처음에 Zero라는 사람의 데이터를 넣으면 MySQL은 알아서 id로 1번을 부여합니다. 
+   다음에 Nero라는 사람의 데이터를 넣으면 자동으로 id 2번을 부여합니다.
+
+• UNSIGNED는 숫자 자료형에 적용되는 옵션입니다. 
+   숫자 자료형은 기본적으로 음수 범위를 지원합니다. 
+   예를 들어 INT는 -2147483648~2147483647까지의 숫자를 저장할 수 있습니다. 
+   만약 UNSIGNED가 적용되어 있다면 음수는 무시되고 0~4294967295까지 저장할 수 있습니다. 
+   FLOAT과 DOUBLE에는 UN 적용이 불가능합니다. 
+   나이처럼 음수가 나올 수 없는 컬럼은 체크해두는 것이 좋습니다.
+
+• ZEROFILL은 숫자의 자릿수가 고정되어 있을 때 사용할 수 있습니다. 
+  가끔 자료형으로 INT 대신 INT(자릿수)처럼 표현하는 경우가 있습니다. 
+  이때 ZEROFILL을 설정해둔다면 비어 있는 자리에 모두 0을 넣습니다. 
+  예를 들어 INT(4)인데 숫자 1을 넣었다면 0001이 되는 식입니다. 
+  실습 예제에는 age 컬럼에 UNSIGNED 옵션만 주었습니다.
+
+• created_at에는 DEFAULT now()라는 옵션이 붙어 있습니다. 
+   데이터베이스 저장 시 해당 컬럼에 값이 없다면 MySQL이 기본값을 대신 넣습니다. 
+   now()는 현재 시각을 넣으라는 뜻입니다. now() 대신 CURRENT_TIMESTAMP를 적어도 같은 뜻이 됩니다. 
+   사용자 정보를 넣으면 created_at 컬럼에는 넣는 순간의 시각이 자동으로 기록됩니다.
+
+• PRIMARY KEY : 해당 컬럼이 기본 키인 경우에 PRIMARY KEY 옵션을 설정(id)
+
+• UNIQUE INDEX는 해당 값이 고유해야 하는지에 대한 옵션이며, name 컬럼이 해당됩니다. 
+   인덱스의 이름은 name_UNIQUE로, name 컬럼을 오름차순(ASC)으로 기억하겠다는 것입니다. 
+   내림차순은 DESC입니다. PRIMARY KEY나 UNIQUE INDEX의 경우에는 데이터베이스가 별도로 컬럼을 관리하므로 조회 시 속도가 빨라집니다. 
+   기본 키인 id도 사실 고유해야 하지만 PRIMARY KEY는 자동으로 UNIQUE INDEX를 포함하므로 따로 적지 않아도 됩니다.
+
+
+테이블 자체에 대한 설정
+• COMMENT는 테이블에 대한 보충 설명을 의미합니다. 
+   이 테이블이 무슨 역할을 하는지 적어두면 됩니다. 필수는 아닙니다.
+
+• DEFAULT CHARACTER SET을 utf8로 설정하지 않으면 
+   한글이 입력되지 않으니 반드시 설정해야 합니다.
+
+• ENGINE은 여러 가지가 있지만, MyISAM과 InnoDB가 제일 많이 사용됩니다. 
+   이 책에서는 InnoDB를 엔진으로 사용하겠습니다.
+
+
+생성한 테이블 확인
+mysql> DESC users;
+
+테이블 지우기
+mysql> DROP TABLE users;
+
+
+nodejs db에 comments테이블 생성
+------------------------------------------------------
+mysql> CREATE TABLE nodejs.comments (
+  -> id INT NOT NULL AUTO_INCREMENT,
+  -> commenter INT NOT NULL,
+  -> comment VARCHAR(100) NOT NULL,
+  -> created_at DATETIME NOT NULL DEFAULT now(),
+  -> PRIMARY KEY(id),
+  -> INDEX commenter_idx (commenter ASC),
+  -> CONSTRAINT commenter
+  -> FOREIGN KEY (commenter)
+  -> REFERENCES nodejs.users (id)
+  -> ON DELETE CASCADE
+  -> ON UPDATE CASCADE)
+  -> COMMENT = '댓글'
+  -> DEFAULT CHARSET=utf8mb4
+  -> ENGINE=InnoDB;
+------------------------------------------------------
+
+commenter 컬럼에는 댓글을 작성한 사용자의 id를 저장할 것입니다. 
+이렇게 다른 테이블의 기본 키를 저장하는 컬럼을 foreign key라고 부릅니다. 
+CONSTRAINT [제약조건명] FOREIGN KEY[컬럼명] REFERENCES[참조 컬럼명]으로 foreign 키를 지정할 수 있습니다.
+
+commenter 컬럼과 users 테이블의 id 컬럼을 연결
+ON UPDATE와 ON DELETE는 모두 CASCADE로 설정. 
+사용자 정보가 수정되거나 삭제되면 그것과 연결된 댓글 정보도 같이 수정하거나 삭제한다는 뜻입니다. 
+그래야 데이터가 불일치하는 현상이 나타나지 않습니다.
+
+전체 테이블 보기
+mysql> SHOW TABLES;
+
+==========================================================
+
+CRUD는 Create, Read, Update, Delete : 데이터베이스에서 많이 수행하는 네 가지 작업
+
+Create (INSERT INTO)
+-------------------------------------------------------
+mysql> INSERT INTO nodejs.users (name, age, married, comment) VALUES ('zero', 24, 0, '자기소개1');
+
+mysql> INSERT INTO nodejs.users (name, age, married, comment) VALUES ('nero', 32, 1, '자기소개2');
+
+mysql> INSERT INTO nodejs.comments (commenter, comment) VALUES (1, '안녕하세요. zero의 댓글입니다');
+-------------------------------------------------------
+INSERT INTO [테이블명] ([컬럼1], [컬럼2], .. .) VALUES ([값1], [값 2], ...)입니다. 
+즉, name에 zero, age에 24, married에 0, comment에 자기소개1이 들어가는 것입니다. 
+id는 AUTO_INCREMENT에 의해, created_at은 DEFAULT 값에 의해 자동으로 들어갑니다
+
+
+Read (SELECT / FROM ) ( / WHERE / ORDER BY / LIMIT / OFFSET(건너뛰기) )
+-------------------------------------------------------------
+mysql> SELECT * FROM nodejs.users;
+
+mysql> SELECT name, married FROM nodejs.users;
+
+mysql> SELECT name, age FROM nodejs.users WHERE married = 1 AND age > 30;
+
+mysql> SELECT id, name FROM nodejs.users ORDER BY age DESC;
+
+mysql> SELECT id, name FROM nodejs.users ORDER BY age DESC LIMIT 1;
+
+mysql> SELECT id, name FROM nodejs.users ORDER BY age DESC LIMIT 1 OFFSET 1;
+----------------------------------------------------------------
+OFFSET
+첫 번째 페이지에서 1~20번 게시물을 조회했다면, 두 번째 페이지에서는 21~40번 게시물을 조회해야 합니다. 
+이때 처음 20개를 건너뛰고 다음 20개 게시물을 조회하라는 식의 명령이 가능
+
+
+Update (UPDATE / SET / WHERE)
+----------------------------------------------------------------
+mysql> UPDATE nodejs.users SET comment = '바꿀 내용' WHERE id = 2;
+----------------------------------------------------------------
+
+
+Delete (DELETE / FROM /WHERE)
+----------------------------------------------------------------
+mysql> DELETE FROM nodejs.users WHERE id = 2;
+----------------------------------------------------------------
+
+=====================================================================
+
+
+시퀄라이즈(Sequelize) : sql말고 js로 MySQL조작 (SQL 몰라도 됨)
+
+ORM(Object-relational Mapping)으로 분류됩니다. 
+ORM은 자바스크립트 객체와 데이터베이스의 릴레이션을 매핑해주는 도구입니다.
+쓰는 이유: 자바스크립트 구문을 알아서 SQL로 바꿔주기 때문입니다. 
+따라서 SQL 언어를 직접 사용하지 않아도 자바스크립트만으로 MySQL을 조작할 수 있고, 
+SQL을 몰라도 MySQL을 어느 정도 다룰 수 있게 됩니다.
+
+시퀄라이즈를 오로지 MySQL과 같이 써야만 하는 것은 아닙니다. 
+MariaDB, PostgreSQL, SQLite, MSSQL 등 다른 데이터베이스도 같이 쓸 수 있습니다. 
+문법이 어느 정도 호환되므로 프로젝트를 다른 SQL 데이터베이스로 전환할 때도 편리
+
+learn-sequelize 폴더 안에 생성합니다.
+
+package.json
+---------------------------------
+"main": "app.js",
+  "scripts": {
+    "start": "nodemon app"
+  },
+---------------------------------
+$ npm i express morgan nunjucks sequelize sequelize-cli mysql2
+$ npm i -D nodemon
+----------------------------------
+mysql2는 MySQL과 시퀄라이즈를 이어주는 드라이버(db프로그램 아님)
+
+----------------------------------
+$ npx sequelize init
+----------------------------------
+models, migration, seeders, config 폴더 생성됨
+
+models/index.js 파일 수정(전체를 아래 코드로)
+--------------------------------------------------------------------
+const Sequelize = require('sequelize');
+
+const env = process.env.NODE_ENV || 'development';
+const config = require('../config/config')[env];
+const db = {};
+
+const sequelize = new Sequelize(config.database, config.username, config.password, config);
+db.sequelize = sequelize;
+
+module.exports = db;
+--------------------------------------------------------------------
+Sequelize는 시퀄라이즈 패키지이자 생성자입니다. 
+config/config.json에서 데이터베이스 설정을 불러온 후 new Sequelize를 통해 MySQL 연결 객체를 생성합니다. 
+연결 객체를 나중에 재사용하기 위해 db.sequelize에 넣어둠.
+
+config/config.js 파일의 "development"를 아래와 같이 수정,
+test와 production은 일단 지움
+production: 나중에 배포시(process.env.NODE_ENV ||  'production' 일때)
+test: 테스트환경(process.env.NODE_ENV ||  'test' 일때)
+--------------------------------------------------------------------
+{
+  "development": {
+    "username": "root",
+    "password": "[root 비밀번호]",	// 현재 MySQL 커넥션과 일치하게 수정
+    "database": "nodejs",		// 현재 MySQL 커넥션과 일치하게 수정
+    "host": "127.0.0.1",
+    "dialect": "mysql"
+  },
+...
+}
+--------------------------------------------------------------------
+
+!! 이제부터 "시퀄라이즈실습"폴더 코드 참고 !!
+
+app.js를 생성해 express와 sequelize 연결 코드 작성
+
+MySQL에서 정의한 테이블을 시퀄라이즈에서도 정의해야 합니다. 
+MySQL의 테이블은 시퀄라이즈의 모델과 대응됩니다. 
+시퀄라이즈는 모델과 MySQL의 테이블을 연결해주는 역할
+모델 이름은 단수형으로, 테이블 이름은 복수형으로 사용
+
+models/user.js 생성
+
+nodels/index.js 수정
+  
+===========================================================
+
+MySQL에서는 JOIN이라는 기능으로 여러 테이블 간의 관계를 파악해 결과를 도출. 
+시퀄라이즈는 JOIN 기능도 알아서 구현. 
+대신 테이블 간에 어떠한 관계가 있는지 시퀄라이즈에 알려야 합니다.
+
+1:N 관계 : hasMany / belongsTo (메서드)
+   사용자가 1이고, 댓글이 N입니다.(users 테이블과 comments 테이블)
+   User  -> hasMany    ->  Comment 
+             <- belongsTo <- 
+
+
+1:1 관계 : 
+   사용자와 사용자에 대한 정보 테이블
+   User  -> hasOne    ->  Info 
+             <- belongsTo <-
+
+N:M 다대다 관계 : 
+     게시글  -> belongsToMany   ->  해시태그 
+             	<- belongsToMany   <-
+게시글 테이블과 해시태그(#) 테이블 관계를 예로 들 수 있습니다. 
+한 게시글에는 해시태그가 여러 개 달릴 수 있고, 
+한 해시태그도 여러 게시글에 달릴 수 있습니다.
+-> SQL이 '게시글해시태그'라는 테이블을 생성해서 저장
+
+MySQL에서는 JOIN이라는 기능으로 여러 테이블 간의 관계를 파악해 결과를 도출. 
+시퀄라이즈는 JOIN 기능도 알아서 구현. 
+대신 테이블 간에 어떠한 관계가 있는지 시퀄라이즈에 알려야 합니다.
+
+
+< Sequelize Query >
+
+SQL과 비교
+
+INSERT INTO nodejs.users (name, age, married, comment) VALUES ('zero', 24, 0, '자기소개1');
+---------------------------------------------------------------------------
+const { User } = require('../models');
+User.create({
+  name: 'zero',
+  age: 24,
+  married: false,		// 0이 아니라 false(sequelize가 알아서 바꿔줌)
+  comment: '자기소개1',
+});
+---------------------------------------------------------------------------
+
+SELECT * FROM nodejs.users;
+---------------------------------------------------------------------------
+User.findAll({});			// SELECT * -> findAll( { } )
+---------------------------------------------------------------------------
+
+SELECT * FROM nodejs.users LIMIT 1;
+---------------------------------------------------------------------------
+User.findOne({});
+---------------------------------------------------------------------------
+
+SELECT name, married FROM nodejs.users;	
+---------------------------------------------------------------------------
+User.findAll({
+  attributes: ['name', 'married'],	// SELECT col, col  ->  findAll( {attribute: [col, col]} )
+});
+---------------------------------------------------------------------------
+
+SELECT name, age FROM nodejs.users WHERE married = 1 AND age > 30;
+---------------------------------------------------------------------------
+const { Op } = require('sequelize');
+const { User } = require('../models');
+User.findAll({
+  attributes: ['name', 'age'],
+  where: {
+    married: 1,			
+    age: { [Op.gt]: 30 },
+  },
+});			// WHERE col AND col  ->  where: {col: , col: }
+---------------------------------------------------------------------------
+
+ Op.gt(초과), Op.gte(이상), Op.lt(미만), Op.lte(이하), Op.ne(같지 않음), 
+ Op.or(또는), Op.in(배열 요소 중 하나), Op.notIn(배열 요소와 모두 다름)
+
+
+SELECT id, name FROM users WHERE married = 0 OR age > 30;
+---------------------------------------------------------------------------
+const { Op } = require('sequelize');
+const { User } = require('../models');
+User.findAll({
+  attributes: ['id', 'name'],
+  where: {
+    [Op.or]: [{ married: 0 }, { age: { [Op.gt]: 30 } }],      
+  },
+});			// WHERE col OR col  ->  where: { [Op.or]: [ {col: }, {col: } ] }   배열로 나열
+---------------------------------------------------------------------------
+
+SELECT id, name FROM users ORDER BY age DESC;
+---------------------------------------------------------------------------
+User.findAll({
+  attributes: ['id', 'name'],
+  order: [['age', 'DESC']],         // ORDER BY -> order: [ [col, 'DESC'] ] 
+});			// 정렬을 두개 이상 컬럼으로 할수도 있어서 [[  ]] 임
+---------------------------------------------------------------------------
+
+SELECT id, name FROM users ORDER BY age DESC LIMIT 1;
+---------------------------------------------------------------------------
+User.findAll({
+  attributes: ['id', 'name'],
+  order: [['age', 'DESC']],
+  limit: 1,			// LIMIT -> limit (findOne으로도 가능) 
+});
+---------------------------------------------------------------------------
+
+SELECT id, name FROM users ORDER BY age DESC LIMIT 1 OFFSET 1;
+---------------------------------------------------------------------------
+User.findAll({
+  attributes: ['id', 'name'],
+  order: ['age', 'DESC'],
+  limit: 1,
+  offset: 1,		// OFFSET -> offset
+});
+---------------------------------------------------------------------------
+
+UPDATE nodejs.users SET comment = '바꿀 내용' WHERE id = 2;
+---------------------------------------------------------------------------
+User.update({
+  comment: '바꿀 내용',
+}, {
+  where: { id: 2 },			// UPDATE  SET col WHERE id  ->  update( { col: }, {where: {id: } } ) 
+});
+---------------------------------------------------------------------------
+
+DELETE FROM nodejs.users WHERE id = 2;
+---------------------------------------------------------------------------
+User.destory({
+  where: { id: 2 },
+});				// DELETE FROM WHERE id  -> destroy( { where: {id: } } )
+---------------------------------------------------------------------------
+
+
+관계 Query
+findOne이나 findAll 메서드를 호출할 때 프로미스의 결과로 Model을 return함
+(findAll은 모두 찾는 것이므로 Model의 배열을 반환합니다).
+
+const user = await User.findOne({});
+console.log(user.nick); 		// 사용자 닉네임
+
+
+만약 특정 사용자(User모델)를 가져오면서 그 사람의 댓글(Comment관계모델)까지 
+모두 가져오고 싶다면 include 속성을 사용
+
+const user = await User.findOne({
+  include: [{
+    model: Comment,
+  }]
+});
+console.log(user.Comment); 		// 사용자 댓글
+
+
+어떤 모델과 관계가 있는지를 include 배열에 넣어주면 됩니다. 
+배열인 이유는 다양한 모델과 관계가 있을 수 있기 때문입니다. 
+댓글은 여러 개일 수 있으므로(hasMany) user.Comments로 접근 가능
+
+const user = await User.findOne({});
+const comments = await user.getComments();
+console.log(comments); 		// 사용자 댓글
+
+getComments(조회) 외에도 setComments(수정), addComment(하나 생성),
+addComments(여러 개 생성), removeComments(삭제)
+
+
+// 관계를 설정할 때 as로 등록 가능
+db.User.hasMany(db.Comment, { foreignKey: 'commenter', sourceKey: 'id', as: 'Answers' });
+
+// 쿼리할 때는
+const user = await User.findOne({});
+const comments = await user.getAnswers();
+console.log(comments); // 사용자 댓글
+
+as를 설정하면 include 시 추가되는 댓글 객체도 user.Answers로 바뀜

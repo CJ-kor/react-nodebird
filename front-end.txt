@@ -1,0 +1,150 @@
+npm init
+package.json
+----------------------------------------------
+dev: next
+build: next build
+dependencies
+ : next, prop-types, react, react-dom
+
+
+front폴더 만들어서 next(react framework) 설치
+ front폴더 안에 pages폴더 자동생성
+
+<Next>
+*** 서버사이드 렌더링(SSR)을 해주기 때문에 사용 ***
+
+기본적으로 webpack포함
+"pages" 폴더 안에 있는 콤포넌트들은 import react 필요없음
+pages라는 폴더명 디폴트
+
+페이지 라우팅까지 해줌(pages폴더 내 js파일명으로 페이지설정됨)
+리액트에선 <Route path="/search"> 이런식으로 라우팅해줘야 함
+
+렌더링페이지들은 pages폴더에 저장(넥스트가 알아서 pages폴더의 파일명으로 페이지라우팅)
+쪼갠 컴포넌트파일들은 폴더 따로 만들어(예. components) 저장
+
+children proptypes를 이용해서 레이아웃 만들기
+레이아웃 콤포넌트 만들어서 공통레이아웃 태그를 감싸기 -> 콤포넌트별 공통
+prop로 children
+AppLayout.propTypes = {
+   children: PropTypes.node.isRequired
+};
+
+
+_app.js    -> 전체 파일 공통 prop로 Component  (CSS import, head tag...)
+NodeBird.propTypes = {
+   Component: PropTypes.elementType.isRequired
+}
+
+--------------------------------------------------
+
+코드깔끔하게
+npm i  eslint -D  
+npm i eslint-plugin-import -D    
+npm i eslint-plugin-react -D     
+npm i eslint-plugin-react-hooks -D 
+root폴더에 .eslintrc파일 생성
+
+Antdesign : css framework
+styled components :     요즘은  emotion.sh
+npm i antd styled-components @ant-design/icons
+
+
+
+공통처리: pages에 _app.js 만들어서 공통 import 처리
+
+
+<Redux>
+next에 리덕스 붙일때 복잡
+간편하게 해주는 라이브러리: next-redux-wrapper
+
+front폴더에 store폴더 > configureStore.js파일 생성
+-----------------------------------------------------
+import { createWrapper } from 'next-redux-wrapper';
+import { compose, applyMiddleware, createStore } from 'redux';
+import { composeWithDevTools } from 'redux-devtools-extension';
+
+import reducer from '../reducers';
+
+const configureStore = () => {
+   const middlewares = [];
+   const enhancer = process.env.NODE_ENV === 'production'
+      ? compose(applyMiddleware(...middlewares)) 
+      : composeWithDevTools(applyMiddleware(...middlewares))
+
+   const store = createStore(reducer, enhancer);
+   return store;
+};
+
+const wrapper = createWrapper(configureStore, { debug: process.env.NODE_ENV === 'development' });
+
+export default wrapper;
+-----------------------------------------------------
+
+
+
+front폴더에 
+npm i next-redux-wrapper
+npm i redux
+npm i redux-devtools-extension  -> 브라우저개발자도구와 연동됨
+
+high order component인 _app.js에
+import wrapper from '../store/configureStore';
+export default AAA를 --->   export default wrapper.withRedux(AAA); 
+
+원래 리덕스는 루트페이지를 <Provider store={store}>.....</Provider>로 감쌈
+넥스트에서는 provider가 안들어감(알아서 넥스트가 넣어줌)
+
+리덕스 모델
+저장소(state)   -> 액션(디스패치) -> reducer(switch가 들어있는 함수) -> 저장소 
+
+저장소(스테이트) { name: aaa, age: 28, pw: *** }
+액션 { type: 'CHANGE_NAME', data: bbb } -> dispatch 
+리듀서 switch (action.type) { 
+                   case 'CHANGE_NAME': 
+                         return { 
+                             ...state, name: action.data 
+                         } 
+                    }
+
+Reducer는 이전state + action으로 -> 다음state를 만들어주는 함수
+Store는 State + Reducer
+이 store를 각 컴포넌트에서 가져다 쓸 수 있음
+
+리덕스 구현
+front폴더에 reducers폴더 생성, 폴더 안에 index.js 생성
+index.js
+-----------------------------------------------------
+import { HYDRATE } from 'next-redux-wrapper';
+//  Hydrate: server-side rendering에 사용
+
+import { combineReducers } from 'redux';
+import user from './user';
+import post from './post';
+
+   // combineReducers 컴바인하기 위한 redux method
+
+const rootReducer = combineReducers({
+   index: (state = {}, action) => {
+      switch (action.type) {
+         case HYDRATE:
+            console.log('HYDRATE', action);
+            return { ...state, ...action.payload }
+         default:
+            return state; 
+      }
+   },
+   user,
+   post,
+});
+
+export default rootReducer;
+-----------------------------------------------------
+
+
+더미데이터 라이브러리
+faker
+shortid
+
+=====================================================
+
